@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>REPAIQ — Coaching musculation par IA</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --gold: #C9A84C;
+      --gold-light: #E8C97A;
+      --gold-dark: #8A6B28;
+      --black: #0A0A0A;
+      --surface: #111111;
+      --surface2: #161616;
+      --surface3: #1C1C1C;
+      --border: rgba(201,168,76,0.15);
+      --border-bright: rgba(201,168,76,0.4);
+      --text: #F0EDE6;
+      --text-muted: rgba(240,237,230,0.55);
+      --text-dim: rgba(240,237,230,0.3);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--black);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 300;
+      line-height: 1.7;
+      overflow-x: hidden;
+    }
+
+    /* ── NOISE TEXTURE OVERLAY ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.6;
+    }
+
+    /* ── GOLD GRADIENT TOP ── */
+    body::after {
+      content: '';
+      position: fixed;
+      top: -400px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 900px;
+      height: 600px;
+      background: radial-gradient(ellipse, rgba(201,168,76,0.08) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      padding: 1.5rem 3rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 0.5px solid var(--border);
+      background: rgba(10,10,10,0.85);
+      backdrop-filter: blur(20px);
+    }
+
+    .nav-logo {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.5rem;
+      font-weight: 600;
+      letter-spacing: 0.25em;
+      color: var(--gold);
+      text-transform: uppercase;
+    }
+
+    .nav-cta {
+      font-size: 0.75rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gold);
+      border: 0.5px solid var(--border-bright);
+      padding: 0.55rem 1.4rem;
+      cursor: pointer;
+      background: transparent;
+      transition: background 0.3s, color 0.3s;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .nav-cta:hover {
+      background: var(--gold);
+      color: var(--black);
+    }
+
+    /* ── HERO ── */
+    .hero {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 8rem 2rem 6rem;
+    }
+
+    .hero-eyebrow {
+      font-size: 0.7rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 2rem;
+      opacity: 0;
+      animation: fadeUp 0.8s 0.2s forwards;
+    }
+
+    .hero-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(3.5rem, 9vw, 7rem);
+      font-weight: 300;
+      line-height: 1.05;
+      letter-spacing: -0.01em;
+      max-width: 900px;
+      margin-bottom: 1rem;
+      opacity: 0;
+      animation: fadeUp 0.9s 0.35s forwards;
+    }
+
+    .hero-title em {
+      font-style: italic;
+      color: var(--gold-light);
+    }
+
+    .hero-sub {
+      font-size: 1rem;
+      color: var(--text-muted);
+      max-width: 520px;
+      line-height: 1.8;
+      margin-bottom: 3.5rem;
+      opacity: 0;
+      animation: fadeUp 0.9s 0.5s forwards;
+    }
+
+    /* ── EMAIL FORM ── */
+    .form-wrap {
+      opacity: 0;
+      animation: fadeUp 0.9s 0.65s forwards;
+      width: 100%;
+      max-width: 480px;
+    }
+
+    .form-inner {
+      display: flex;
+      border: 0.5px solid var(--border-bright);
+      background: var(--surface);
+      overflow: hidden;
+    }
+
+    .form-inner input {
+      flex: 1;
+      padding: 1rem 1.25rem;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 300;
+    }
+    .form-inner input::placeholder { color: var(--text-dim); }
+
+    .form-inner button {
+      padding: 1rem 1.75rem;
+      background: var(--gold);
+      color: var(--black);
+      border: none;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      transition: background 0.25s;
+      white-space: nowrap;
+    }
+    .form-inner button:hover { background: var(--gold-light); }
+
+    .form-note {
+      font-size: 0.72rem;
+      color: var(--text-dim);
+      margin-top: 0.9rem;
+      letter-spacing: 0.05em;
+    }
+
+    .success-msg {
+      display: none;
+      color: var(--gold-light);
+      font-size: 0.85rem;
+      letter-spacing: 0.05em;
+      padding: 1.2rem;
+      border: 0.5px solid var(--border-bright);
+      background: rgba(201,168,76,0.05);
+      text-align: center;
+    }
+
+    /* ── DIVIDER ── */
+    .divider {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem 3rem;
+    }
+    .divider-line {
+      flex: 1;
+      height: 0.5px;
+      background: var(--border);
+    }
+    .divider-diamond {
+      width: 6px;
+      height: 6px;
+      background: var(--gold-dark);
+      transform: rotate(45deg);
+      margin: 0 1.5rem;
+    }
+
+    /* ── SECTION ── */
+    section {
+      position: relative;
+      z-index: 1;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 6rem 2rem;
+    }
+
+    .section-label {
+      font-size: 0.68rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 3rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .section-label::after {
+      content: '';
+      flex: 1;
+      max-width: 60px;
+      height: 0.5px;
+      background: var(--gold-dark);
+    }
+
+    /* ── PROBLEM ── */
+    .problem-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      border: 0.5px solid var(--border);
+    }
+
+    .problem-card {
+      padding: 2.5rem;
+      border-right: 0.5px solid var(--border);
+      border-bottom: 0.5px solid var(--border);
+    }
+    .problem-card:nth-child(2n) { border-right: none; }
+    .problem-card:nth-child(3), .problem-card:nth-child(4) { border-bottom: none; }
+
+    .problem-card-num {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 3rem;
+      font-weight: 300;
+      color: var(--gold-dark);
+      line-height: 1;
+      margin-bottom: 1rem;
+    }
+
+    .problem-card-title {
+      font-size: 1rem;
+      font-weight: 500;
+      color: var(--text);
+      margin-bottom: 0.6rem;
+    }
+
+    .problem-card-text {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      line-height: 1.8;
+    }
+
+    /* ── FEATURES ── */
+    .features-hero-text {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 300;
+      line-height: 1.2;
+      max-width: 700px;
+      margin-bottom: 5rem;
+    }
+
+    .features-hero-text span {
+      color: var(--gold-light);
+      font-style: italic;
+    }
+
+    .features-list {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2px;
+    }
+
+    .feature-item {
+      padding: 2rem;
+      background: var(--surface2);
+      transition: background 0.3s;
+    }
+    .feature-item:hover { background: var(--surface3); }
+
+    .feature-icon {
+      width: 36px;
+      height: 36px;
+      border: 0.5px solid var(--border-bright);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1.25rem;
+    }
+
+    .feature-icon svg { width: 16px; height: 16px; stroke: var(--gold); fill: none; stroke-width: 1.5; }
+
+    .feature-title {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--text);
+      margin-bottom: 0.5rem;
+    }
+
+    .feature-desc {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      line-height: 1.8;
+    }
+
+    /* ── PRICING ── */
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 1px;
+      background: var(--border);
+    }
+
+    .pricing-card {
+      background: var(--black);
+      padding: 2.5rem;
+      position: relative;
+    }
+
+    .pricing-card.featured {
+      background: var(--surface2);
+    }
+
+    .pricing-badge {
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gold);
+      background: rgba(201,168,76,0.1);
+      border: 0.5px solid var(--border-bright);
+      padding: 0.3rem 0.8rem;
+      display: inline-block;
+      margin-bottom: 1.5rem;
+    }
+
+    .pricing-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.5rem;
+      font-weight: 400;
+      color: var(--text);
+      margin-bottom: 0.5rem;
+    }
+
+    .pricing-price {
+      font-size: 2.5rem;
+      font-weight: 300;
+      color: var(--gold-light);
+      line-height: 1;
+      margin-bottom: 0.3rem;
+    }
+
+    .pricing-price sub {
+      font-size: 0.9rem;
+      font-weight: 300;
+      color: var(--text-muted);
+      vertical-align: middle;
+    }
+
+    .pricing-period {
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      margin-bottom: 2rem;
+    }
+
+    .pricing-features {
+      list-style: none;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      line-height: 2;
+    }
+
+    .pricing-features li::before {
+      content: '—  ';
+      color: var(--gold-dark);
+    }
+
+    /* ── STATS ── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1px;
+      background: var(--border);
+      margin-top: 6rem;
+    }
+
+    .stat-item {
+      background: var(--black);
+      padding: 2.5rem 2rem;
+      text-align: center;
+    }
+
+    .stat-num {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 3rem;
+      font-weight: 300;
+      color: var(--gold-light);
+      line-height: 1;
+      display: block;
+    }
+
+    .stat-label {
+      font-size: 0.72rem;
+      color: var(--text-dim);
+      letter-spacing: 0.1em;
+      margin-top: 0.5rem;
+      text-transform: uppercase;
+    }
+
+    /* ── CTA SECTION ── */
+    .cta-section {
+      text-align: center;
+      padding: 8rem 2rem;
+      position: relative;
+      z-index: 1;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    .cta-section h2 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(2.5rem, 6vw, 4.5rem);
+      font-weight: 300;
+      line-height: 1.1;
+      margin-bottom: 1.5rem;
+    }
+
+    .cta-section h2 em {
+      font-style: italic;
+      color: var(--gold-light);
+    }
+
+    .cta-section p {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-bottom: 3rem;
+      max-width: 400px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      position: relative;
+      z-index: 1;
+      border-top: 0.5px solid var(--border);
+      padding: 2.5rem 3rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .footer-logo {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1rem;
+      letter-spacing: 0.25em;
+      color: var(--gold-dark);
+      text-transform: uppercase;
+    }
+
+    .footer-copy {
+      font-size: 0.72rem;
+      color: var(--text-dim);
+    }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      nav { padding: 1.25rem 1.5rem; }
+      .problem-grid { grid-template-columns: 1fr; }
+      .problem-card { border-right: none; border-bottom: 0.5px solid var(--border); }
+      .problem-card:last-child { border-bottom: none; }
+      .features-list { grid-template-columns: 1fr; gap: 2px; }
+      .pricing-grid { grid-template-columns: 1fr; }
+      .stats-row { grid-template-columns: 1fr 1fr; }
+      .form-inner { flex-direction: column; }
+      .form-inner button { width: 100%; }
+      footer { flex-direction: column; gap: 1rem; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <div class="nav-logo">REPAIQ</div>
+    <button class="nav-cta" onclick="document.getElementById('waitlist').scrollIntoView({behavior:'smooth'})">Rejoindre la liste</button>
+  </nav>
+
+  <!-- HERO -->
+  <div class="hero">
+    <p class="hero-eyebrow">Coaching musculation par intelligence artificielle</p>
+    <h1 class="hero-title">
+      Ton coach IA.<br><em>Disponible 24h/24.</em><br>En français.
+    </h1>
+    <p class="hero-sub">
+      REPAIQ analyse chaque séance et génère des recommandations personnalisées pour la suivante. Fini la stagnation — place à la progression structurée.
+    </p>
+    <div class="form-wrap" id="waitlist">
+      <div class="form-inner" id="form-el">
+        <input type="email" id="email-input" placeholder="ton@email.com" autocomplete="email" />
+        <button onclick="handleSubmit()">Rejoindre</button>
+      </div>
+      <div class="success-msg" id="success-msg">
+        ✦ &nbsp; Tu es sur la liste. On te contacte en avant-première.
+      </div>
+      <p class="form-note">Aucun spam · Accès bêta en avant-première · Gratuit</p>
+    </div>
+  </div>
+
+  <!-- DIVIDER -->
+  <div class="divider">
+    <div class="divider-line"></div>
+    <div class="divider-diamond"></div>
+    <div class="divider-line"></div>
+  </div>
+
+  <!-- PROBLEM -->
+  <section>
+    <div class="section-label">Le problème</div>
+    <div class="problem-grid">
+      <div class="problem-card">
+        <div class="problem-card-num">01</div>
+        <div class="problem-card-title">Les apps enregistrent. Elles n'entraînent pas.</div>
+        <div class="problem-card-text">Hevy, Strong, FitNotes — excellentes pour noter. Silencieuses quand tu stagnes depuis 3 semaines.</div>
+      </div>
+      <div class="problem-card">
+        <div class="problem-card-num">02</div>
+        <div class="problem-card-title">Un coach humain coûte cher. Très cher.</div>
+        <div class="problem-card-text">70 à 120€ la séance. Un suivi sérieux, c'est plusieurs centaines d'euros par mois. Hors de portée.</div>
+      </div>
+      <div class="problem-card">
+        <div class="problem-card-num">03</div>
+        <div class="problem-card-title">L'IA fitness existante est en anglais.</div>
+        <div class="problem-card-text">Fitbod, Ladder — en anglais uniquement. Zéro app de coaching IA sérieuse en français à ce jour.</div>
+      </div>
+      <div class="problem-card">
+        <div class="problem-card-num">04</div>
+        <div class="problem-card-title">6,2 millions de pratiquants en France.</div>
+        <div class="problem-card-text">Sans solution adaptée. Le marché mondial des apps fitness atteindra 14,65 Md$ en 2035. La fenêtre est ouverte.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DIVIDER -->
+  <div class="divider">
+    <div class="divider-line"></div>
+    <div class="divider-diamond"></div>
+    <div class="divider-line"></div>
+  </div>
+
+  <!-- FEATURES -->
+  <section>
+    <div class="section-label">Ce que REPAIQ fait</div>
+    <p class="features-hero-text">
+      La différence entre un <span>enregistreur</span><br>et un vrai coach.
+    </p>
+    <div class="features-list">
+      <div class="feature-item">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        </div>
+        <div class="feature-title">Progression automatique</div>
+        <div class="feature-desc">L'IA suggère les bonnes augmentations de charge au bon moment, séance après séance.</div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><path d="M12 8v4l3 3"/></svg>
+        </div>
+        <div class="feature-title">Programme sur-mesure</div>
+        <div class="feature-desc">Basé sur ton niveau, tes objectifs et ton matériel disponible. Généré en quelques secondes.</div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24"><path d="M2 20h20M4 20V10l8-6 8 6v10"/></svg>
+        </div>
+        <div class="feature-title">Détection de stagnation</div>
+        <div class="feature-desc">Alertes intelligentes dès que tu bloques, avec suggestions d'ajustement personnalisées.</div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24"><path d="M3 3h18v18H3z"/><path d="M3 9h18M9 21V9"/></svg>
+        </div>
+        <div class="feature-title">Journal de bord complet</div>
+        <div class="feature-desc">Historique visuel de chaque exercice — courbes de progression, records personnels, tendances.</div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+        </div>
+        <div class="feature-title">Coach disponible 24h/24</div>
+        <div class="feature-desc">En français. Sans tarif horaire. Répond à toutes tes questions d'entraînement à n'importe quelle heure.</div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        </div>
+        <div class="feature-title">Recommandations post-séance</div>
+        <div class="feature-desc">Après chaque entraînement, une analyse détaillée et un plan pour la prochaine séance.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DIVIDER -->
+  <div class="divider">
+    <div class="divider-line"></div>
+    <div class="divider-diamond"></div>
+    <div class="divider-line"></div>
+  </div>
+
+  <!-- PRICING -->
+  <section>
+    <div class="section-label">Tarifs</div>
+    <div class="pricing-grid">
+      <div class="pricing-card">
+        <div class="pricing-name">Gratuit</div>
+        <div class="pricing-price">0€</div>
+        <div class="pricing-period">pour toujours</div>
+        <ul class="pricing-features">
+          <li>Journal de séances basique</li>
+          <li>Programme générique</li>
+          <li>Historique 30 jours</li>
+        </ul>
+      </div>
+      <div class="pricing-card featured">
+        <div class="pricing-badge">Populaire</div>
+        <div class="pricing-name">Premium</div>
+        <div class="pricing-price">7,99€<sub>/mois</sub></div>
+        <div class="pricing-period">ou 59,99€/an (−37%)</div>
+        <ul class="pricing-features">
+          <li>Coaching IA complet</li>
+          <li>Recommandations post-séance</li>
+          <li>Détection de stagnation</li>
+          <li>Historique illimité</li>
+          <li>Coach disponible 24h/24</li>
+        </ul>
+      </div>
+      <div class="pricing-card">
+        <div class="pricing-name">Annuel</div>
+        <div class="pricing-price">59,99€<sub>/an</sub></div>
+        <div class="pricing-period">soit 5€/mois — économise 37%</div>
+        <ul class="pricing-features">
+          <li>Toutes les fonctions Premium</li>
+          <li>Accès prioritaire aux nouveautés</li>
+          <li>Support dédié</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-row">
+      <div class="stat-item">
+        <span class="stat-num">6,2M</span>
+        <div class="stat-label">pratiquants en France</div>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num">+17%</span>
+        <div class="stat-label">croissance annuelle du marché</div>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num">0</span>
+        <div class="stat-label">app coaching IA en français</div>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num">24h</span>
+        <div class="stat-label">disponibilité du coach</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DIVIDER -->
+  <div class="divider">
+    <div class="divider-line"></div>
+    <div class="divider-diamond"></div>
+    <div class="divider-line"></div>
+  </div>
+
+  <!-- CTA FINAL -->
+  <div class="cta-section">
+    <h2>Prêt à arrêter de <em>stagner</em>&nbsp;?</h2>
+    <p>Rejoins la liste d'attente. Les premiers inscrits accèdent à la bêta en avant-première et gratuitement.</p>
+    <div class="form-wrap" style="margin: 0 auto;">
+      <div class="form-inner" id="form-el-2">
+        <input type="email" id="email-input-2" placeholder="ton@email.com" autocomplete="email" />
+        <button onclick="handleSubmit2()">Rejoindre</button>
+      </div>
+      <div class="success-msg" id="success-msg-2">
+        ✦ &nbsp; Tu es sur la liste. On te contacte en avant-première.
+      </div>
+      <p class="form-note">Aucun spam · Accès bêta en avant-première · Gratuit</p>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-logo">REPAIQ</div>
+    <div class="footer-copy">© 2026 REPAIQ — Coaching musculation par IA — Projet en cours de développement</div>
+  </footer>
+
+  <script>
+    function handleSubmit() {
+      const email = document.getElementById('email-input').value.trim();
+      if (!email || !email.includes('@')) {
+        document.getElementById('email-input').style.borderBottom = '1px solid rgba(201,168,76,0.6)';
+        return;
+      }
+      document.getElementById('form-el').style.display = 'none';
+      document.getElementById('success-msg').style.display = 'block';
+      console.log('Email inscrit:', email);
+    }
+
+    function handleSubmit2() {
+      const email = document.getElementById('email-input-2').value.trim();
+      if (!email || !email.includes('@')) return;
+      document.getElementById('form-el-2').style.display = 'none';
+      document.getElementById('success-msg-2').style.display = 'block';
+      console.log('Email inscrit:', email);
+    }
+
+    document.getElementById('email-input').addEventListener('keydown', e => {
+      if (e.key === 'Enter') handleSubmit();
+    });
+    document.getElementById('email-input-2').addEventListener('keydown', e => {
+      if (e.key === 'Enter') handleSubmit2();
+    });
+  </script>
+</body>
+</html>
