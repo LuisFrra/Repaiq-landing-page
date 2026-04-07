@@ -503,7 +503,7 @@
   reveals.forEach(el => observer.observe(el));
 
   // Form
-  async function handleSubmit(e) {
+async function handleSubmit(e) {
   e.preventDefault();
   const input = e.target.querySelector('input');
   const btn = e.target.querySelector('button');
@@ -513,27 +513,20 @@
   btn.disabled = true;
 
   try {
-    const res = await fetch('https://api.brevo.com/v3/contacts', {
+    const res = await fetch('/api/subscribe', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'api-key': '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'
-      },
-      body: JSON.stringify({
-        email: email,
-        listIds: [#3], 
-        updateEnabled: true
-      })
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
     });
 
-    if (res.ok || res.status === 204) {
+    const data = await res.json();
+
+    if (res.ok) {
       btn.textContent = '✓ Inscrit !';
       btn.style.background = '#4caf50';
       input.value = '';
     } else {
-      const err = await res.json();
-      console.error(err);
-      btn.textContent = 'Erreur — réessaie';
+      btn.textContent = data.error || 'Erreur — réessaie';
       btn.style.background = '#e53935';
     }
   } catch (err) {
