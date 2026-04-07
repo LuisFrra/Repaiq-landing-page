@@ -503,15 +503,50 @@
   reveals.forEach(el => observer.observe(el));
 
   // Form
-  function handleSubmit(e) {
-    e.preventDefault();
-    const input = e.target.querySelector('input');
-    const btn = e.target.querySelector('button');
-    btn.textContent = '✓ Inscrit !';
-    btn.style.background = '#4caf50';
-    input.value = '';
-    setTimeout(() => { btn.textContent = 'Rejoindre'; btn.style.background = ''; }, 3000);
+  async function handleSubmit(e) {
+  e.preventDefault();
+  const input = e.target.querySelector('input');
+  const btn = e.target.querySelector('button');
+  const email = input.value.trim();
+
+  btn.textContent = '...';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch('https://api.brevo.com/v3/contacts', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'api-key': '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'
+      },
+      body: JSON.stringify({
+        email: email,
+        listIds: [#3], 
+        updateEnabled: true
+      })
+    });
+
+    if (res.ok || res.status === 204) {
+      btn.textContent = '✓ Inscrit !';
+      btn.style.background = '#4caf50';
+      input.value = '';
+    } else {
+      const err = await res.json();
+      console.error(err);
+      btn.textContent = 'Erreur — réessaie';
+      btn.style.background = '#e53935';
+    }
+  } catch (err) {
+    btn.textContent = 'Erreur réseau';
+    btn.style.background = '#e53935';
+  } finally {
+    btn.disabled = false;
+    setTimeout(() => {
+      btn.textContent = 'Rejoindre';
+      btn.style.background = '';
+    }, 3000);
   }
+}
 </script>
 </body>
 </html>
